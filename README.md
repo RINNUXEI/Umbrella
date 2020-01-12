@@ -34,16 +34,26 @@ Because this asset almost does nothing about security things (hope Google will h
 * Send data to Google sheets.
 ![Send data to Google sheets](Demos/send_data.gif)
 
- * Update data in Google sheets.
+* Update data in Google sheets.
 ![Update data in Google sheets](Demos/update_data.gif)
 
- * Send another data. Note: Because Umbrella generates unique ids in Unity and saves them in PlayerPrefs, you should clear PlayerPrefs otherwise duplicated sending will overwrite the data already stored in Google sheets.
+* Send another data. Note: Because Umbrella generates unique ids in Unity and saves them in PlayerPrefs, you should clear PlayerPrefs otherwise duplicated sending will overwrite the data already stored in Google sheets.
 ![Send another data](Demos/send_another_data.gif)
 
- * Get data from Google sheets by keys.
+* Get data from Google sheets by keys.
 ![Get data from Google sheets by keys](Demos/get_data.gif)
 
- * You can also get data by cell references.
+* You can also get data by cell references.
 ![Get data from Google sheets by cell references](Demos/get_data_by_cell.gif)
+
+## Ranking
+* Send scores to Google sheets.
+![Send scores to Google sheets](Demos/send_score.gif)
+
+* Update score in Google sheets.
+![Update score in Google sheets](Demos/update_score.gif)
+
+* Get ranking list from Google sheets.
+![Get ranking list from Google sheets](Demos/get_ranking.gif)
 
 

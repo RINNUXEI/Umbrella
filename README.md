@@ -1,5 +1,11 @@
 # Umbrella
-A Unity asset using Google Sheets for storing and retrieving data.
+A Unity asset using Google Sheets for storing and retrieving data. This package also provides two applications, **Database** and **Ranking**, to demostrate the usage. 
+
+Database can let you send any form of data to Google sheets and retrieve them later. You can use this system to store player information, such as id, name, equipments, and even master data of your game systems. Data are sent by key value paris and are restricted to some simiple types that [MiniJson](https://gist.github.com/darktable/1411710) can parse.
+
+Ranking is another application that can send player score to Google sheets and get the ranking list back.
+
+Because this asset almost does nothing about security things (hope Google will handle it well though), as well as [Quotas for Google Services](https://developers.google.com/apps-script/guides/services/quotas#current_quotas), **it is not recommended for big scale or any commercial projects**. Indie developers who just want a simple way of saving and getting data online are welcome to try this :)
 
 # How to use
 ## Google sheets side

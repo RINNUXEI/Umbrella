@@ -180,7 +180,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u30C7\u30FC\u30BF\u9001\u4FE1"
+  m_Text: Send Data
 --- !u!222 &151633167
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -568,7 +568,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u30C7\u30FC\u30BF\u53D6\u5F97"
+  m_Text: Get Data
 --- !u!222 &1236913901
 CanvasRenderer:
   m_ObjectHideFlags: 0

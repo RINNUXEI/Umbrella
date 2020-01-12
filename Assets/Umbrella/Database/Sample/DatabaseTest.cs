@@ -21,7 +21,7 @@ namespace Umbrella.Database
 
             var data = new Dictionary<string, object>();
             data["playerName"] = "totorock";
-            data["message"] = "こんにちわ";
+            data["message"] = "Hello";
             DatabaseManager.Instance.SendDataAsync(data);
         }
 

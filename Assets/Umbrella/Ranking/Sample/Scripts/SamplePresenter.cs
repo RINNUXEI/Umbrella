@@ -16,15 +16,14 @@ namespace Umbrella.Ranking
         {
             _view.InitializeRankingSettingOptions(_settings.RankingRequestSettings.Select(s => s.RankingName));
 
-            // コールバックでリスト表示更新するやりかた
             _view.OnClickSendScoreButton.AddListener(() => RankingManager.Instance.SendScoreAsync(_view.PlayerName, _view.PlayerScore, UpdateRankingListView, _view.CurrentRankingSettingIndex));
 
-            // 送信の完了を待ってからリスト表示更新するやりかた
             _view.OnClickGetRankingButton.AddListener(() => StartCoroutine(CT_GetRankingList()));
         }
 
         private IEnumerator CT_GetRankingList()
         {
+            // Wait until the ranking data has been retrieved.
             yield return RankingManager.Instance.GetRankingListAsync(UpdateRankingListView, rankingRequestIndex: _view.CurrentRankingSettingIndex);
         }
 
@@ -43,7 +42,7 @@ namespace Umbrella.Ranking
                 view.gameObject.SetActive(true);
             }
 
-            _view.SetMyRanking(myRanking == -1 ? "圏外" : myRanking.ToString());
+            _view.SetMyRanking(myRanking == -1 ? "Out Of Range" : myRanking.ToString());
         }
     }
 }

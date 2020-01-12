@@ -39,10 +39,10 @@ namespace Umbrella.Database
         {
             var content = _getDataInputField.text;
             var keys = content.Split(',');
-            DatabaseManager.Instance.GetDataAsync(keys, PrintResults);
-
             // You can also use cell reference to get data.
             //DatabaseManager.Instance.GetDataAsync("A1:E2", PrintResults);
+            if (keys.Length == 1) DatabaseManager.Instance.GetDataAsync(keys[0], PrintResults);
+            else DatabaseManager.Instance.GetDataAsync(keys, PrintResults);
         }
 
         private void PrintResults(IList<string> results)

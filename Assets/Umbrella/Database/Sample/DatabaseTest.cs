@@ -6,48 +6,48 @@ namespace Umbrella.Database
 {
     public class DatabaseTest : MonoBehaviour
     {
+        [SerializeField] private InputField _sendDataInputField;
         [SerializeField] private Button _sendDataButton;
+        [SerializeField] private InputField _getDataInputField;
         [SerializeField] private Button _getDataButton;
+        [SerializeField] private Text _getDataResults;
+        [SerializeField] private Button _clearButton;
 
         void Start()
         {
             _sendDataButton.onClick.AddListener(SendData);
             _getDataButton.onClick.AddListener(GetData);
+            _clearButton.onClick.AddListener(PlayerPrefs.DeleteAll);
         }
 
         private void SendData()
         {
-            //GSSDataServer.Instance.SendDataAsync("equipment", "umbrella");
-
+            var content = _sendDataInputField.text;
+            var keyValuePairs = content.Split(',');
             var data = new Dictionary<string, object>();
-            data["playerName"] = "totorock";
-            data["message"] = "Hello";
+            foreach (var kvp in keyValuePairs)
+            {
+                var split = kvp.Split(':');
+                var key = split[0];
+                var value = split[1];
+                data[key] = value;
+            }
             DatabaseManager.Instance.SendDataAsync(data);
         }
 
         private void GetData()
         {
-            // var key = "equipment";
-            // GSSDataServer.Instance.GetDataAsync(key, PrintResult);
+            var content = _getDataInputField.text;
+            var keys = content.Split(',');
+            DatabaseManager.Instance.GetDataAsync(keys, PrintResults);
 
-            // var keys = new List<string> { "playerName", "message" };
-            // GSSDataServer.Instance.GetDataAsync(keys, PrintResults);
-
-            var cellRef = "A1:E2";
-            DatabaseManager.Instance.GetDataAsync(cellRef, PrintResults);
-        }
-
-        private void PrintResult(string result)
-        {
-            Debug.Log(result);
+            // You can also use cell reference to get data.
+            //DatabaseManager.Instance.GetDataAsync("A1:E2", PrintResults);
         }
 
         private void PrintResults(IList<string> results)
         {
-            foreach (var result in results)
-            {
-                UnityEngine.Debug.Log(result);
-            }
+            _getDataResults.text = string.Join(",", results);
         }
     }
 }

@@ -19,6 +19,8 @@ namespace Umbrella.Ranking
             _view.OnClickSendScoreButton.AddListener(() => RankingManager.Instance.SendScoreAsync(_view.PlayerName, _view.PlayerScore, UpdateRankingListView, _view.CurrentRankingSettingIndex));
 
             _view.OnClickGetRankingButton.AddListener(() => StartCoroutine(CT_GetRankingList()));
+
+            _view.OnClickClearButton.AddListener(PlayerPrefs.DeleteAll);
         }
 
         private IEnumerator CT_GetRankingList()

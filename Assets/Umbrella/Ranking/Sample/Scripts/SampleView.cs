@@ -11,13 +11,14 @@ namespace Umbrella.Ranking
         [SerializeField] private InputField _nameInput;
         [SerializeField] private InputField _scoreInput;
         [SerializeField] private Dropdown _rankingSettingIndexInput;
-
         [SerializeField] private Button _sendScoreButton;
         [SerializeField] private Button _getRankingButton;
         [SerializeField] private Text _myRanking;
+        [SerializeField] private Button _clearButton;
 
         public Button.ButtonClickedEvent OnClickSendScoreButton => _sendScoreButton.onClick;
         public Button.ButtonClickedEvent OnClickGetRankingButton => _getRankingButton.onClick;
+        public Button.ButtonClickedEvent OnClickClearButton => _clearButton.onClick;
         public string PlayerName => _nameInput.text;
         public int PlayerScore => Int32.Parse(_scoreInput.text);
         public int CurrentRankingSettingIndex { get; private set; }

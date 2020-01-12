@@ -16,5 +16,7 @@ MonoBehaviour:
   RankingRequestSettings:
   - RankingName: ranking1
     RankingNumber: 30
+    OrderBy: 1
   - RankingName: ranking2
     RankingNumber: 30
+    OrderBy: 0

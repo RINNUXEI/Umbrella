@@ -29,3 +29,21 @@ Because this asset almost does nothing about security things (hope Google will h
 4. You can now send score to Google sheets using `RankingManager.Instance.SendScoreAsync(playerName, score, handleResponseCallback, rankingRequestIndex)` and get the ranking list from Google sheets using `RankingManager.Instance.GetRankingListAsync(handleResponseCallback, rankingRequestIndex)`. If you want, add `yield return` before these methods to hang on and wait until the *handleResponseCallback* returns.
 5. For specific usage, please refer to the sample scene and scripts.
 
+# Demo
+## Database
+* Send data to Google sheets.
+![Send data to Google sheets](Demos/send_data.gif)
+
+ * Update data in Google sheets.
+![Update data in Google sheets](Demos/update_data.gif)
+
+ * Send another data. Note: Because Umbrella generates unique ids in Unity and saves them in PlayerPrefs, you should clear PlayerPrefs otherwise duplicated sending will overwrite the data already stored in Google sheets.
+![Send another data](Demos/send_another_data.gif)
+
+ * Get data from Google sheets by keys.
+![Get data from Google sheets by keys](Demos/get_data.gif)
+
+ * You can also get data by cell references.
+![Get data from Google sheets by cell references](Demos/get_data_by_cell.gif)
+
+

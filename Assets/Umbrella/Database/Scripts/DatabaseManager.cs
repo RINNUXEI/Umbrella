@@ -11,7 +11,7 @@ namespace Umbrella.Database
     /// </summary>
     public class DatabaseManager : MonoBehaviour
     {
-        [SerializeField] private string _appUrl;
+        [SerializeField] private string _appURL;
         [SerializeField] private string _defaultSheet = "Sheet1";
 
         private GSSDataHub _dataHub;
@@ -57,7 +57,7 @@ namespace Umbrella.Database
         /// <returns></returns>
         public CustomYieldInstruction SendDataAsync(IDictionary<string, object> keyValuePairs, Action<string> handleResponse = null, string sheetName = "")
         {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appUrl);
+            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
 
             var sendData = new Dictionary<string, object>();
             sendData[DatabaseConsts.UserId] = Helpers.GetUserID();
@@ -83,7 +83,7 @@ namespace Umbrella.Database
         /// <returns></returns>
         public CustomYieldInstruction GetDataAsync(string key, Action<string> handleResponse, string sheetName = "")
         {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appUrl);
+            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
 
             var sendData = new Dictionary<string, object>();
             sendData[DatabaseConsts.UserId] = Helpers.GetUserID();
@@ -112,7 +112,7 @@ namespace Umbrella.Database
         /// <returns></returns>
         public CustomYieldInstruction GetDataAsync(IList<string> keys, Action<IList<string>> handleResponse, string sheetName = "")
         {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appUrl);
+            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
 
             var sendData = new Dictionary<string, object>();
             sendData[DatabaseConsts.UserId] = Helpers.GetUserID();
@@ -142,7 +142,7 @@ namespace Umbrella.Database
         /// <returns></returns>
         public CustomYieldInstruction GetDataAsync(string cellReference, Action<IList<string>> handleResponse, string sheetName = "")
         {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appUrl);
+            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
 
             var sendData = new Dictionary<string, object>();
             sendData[DatabaseConsts.CellReference] = cellReference;

@@ -12,11 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5699cd17763bf4e3d93f9a5c9ecd6406, type: 3}
   m_Name: RankingSettings
   m_EditorClassIdentifier: 
-  AppURL: https://script.google.com/macros/s/AKfycbwPmxzpoYf-Fx0Ph4aE4ONjml1Wl4h25B9keGvjml62cttYF7HY/exec
-  RankingRequestSettings:
-  - RankingName: ranking1
-    RankingNumber: 30
-    OrderBy: 1
-  - RankingName: ranking2
-    RankingNumber: 30
-    OrderBy: 0
+  AppURL: 
+  RankingRequestSettings: []

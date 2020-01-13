@@ -1986,15 +1986,5 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 759283435607808921, guid: 4bcd2c6ea333a4d1395f5f2ba256f0c4,
-        type: 3}
-      propertyPath: _appUrl
-      value: https://script.google.com/macros/s/AKfycbw6zcUTQ_dM-yWJlbZ1CIa4nddWSTtV8P1Yf0IZPN9iZU2i3Js/exec
-      objectReference: {fileID: 0}
-    - target: {fileID: 759283435607808921, guid: 4bcd2c6ea333a4d1395f5f2ba256f0c4,
-        type: 3}
-      propertyPath: _defaultSheet
-      value: Sheet2
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4bcd2c6ea333a4d1395f5f2ba256f0c4, type: 3}

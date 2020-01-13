@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2547693095014204284}
   - component: {fileID: 759283435607808921}
   m_Layer: 0
-  m_Name: GSSDataServer
+  m_Name: DatabaseManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -43,5 +43,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5040b7b44d37642eaa3f2697c528d4c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _appUrl: 
-  _defaultSheet: Sheet1
+  _appURL: 
+  _defaultSheet: 

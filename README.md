@@ -11,11 +11,12 @@ Because this asset almost does nothing about security things (hope Google will h
 ## Google sheets side
 1. Create a new Google sheet.
 2. Open the Script Editor from Tools > Script Editor.
-3. Copy the content of the .gs file (within the .unitypackage) to the Script Editor.
+3. Copy the content of the .gs file (within the .unitypackage) to Code.gs.
 4. Save the project and give it a name.
 5. From the menu, Publish < Deploy as web app...
 6. In the Deploy as web app popup, make sure you Execute the app as your own account and **Who has access to the app** is set to *Anyone, even anonymous*.
 7. Click Deploy and copy the web app URL.
+8. If *This app isn't verified* pops up, at the left bottom corner, click *Advanced* > *Go to [your_project_name] (unsafe)* > *Allow* to verify your app. 
 ## Unity side (Database)
 1. Drag & Drop the *DatabaseManager* prefab into your scene hierarchy (the scene you want to do the data communication).
 2. From the prefab instance, paste the web app URL you copied previously to the *App Url* field.
@@ -34,16 +35,26 @@ Because this asset almost does nothing about security things (hope Google will h
 * Send data to Google sheets.
 ![Send data to Google sheets](Demos/send_data.gif)
 
- * Update data in Google sheets.
+* Update data in Google sheets.
 ![Update data in Google sheets](Demos/update_data.gif)
 
- * Send another data. Note: Because Umbrella generates unique ids in Unity and saves them in PlayerPrefs, you should clear PlayerPrefs otherwise duplicated sending will overwrite the data already stored in Google sheets.
+* Send another data. Note: Because Umbrella generates unique ids in Unity and saves them in PlayerPrefs, you should clear PlayerPrefs otherwise duplicated sending will overwrite the data already stored in Google sheets.
 ![Send another data](Demos/send_another_data.gif)
 
- * Get data from Google sheets by keys.
+* Get data from Google sheets by keys.
 ![Get data from Google sheets by keys](Demos/get_data.gif)
 
- * You can also get data by cell references.
+* You can also get data by cell references.
 ![Get data from Google sheets by cell references](Demos/get_data_by_cell.gif)
+
+## Ranking
+* Send scores to Google sheets.
+![Send scores to Google sheets](Demos/send_score.gif)
+
+* Update score in Google sheets.
+![Update score in Google sheets](Demos/update_score.gif)
+
+* Get ranking list from Google sheets.
+![Get ranking list from Google sheets](Demos/get_ranking.gif)
 
 

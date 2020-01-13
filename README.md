@@ -11,7 +11,7 @@ Because this asset almost does nothing about security things (hope Google will h
 ## Google sheets side
 1. Create a new Google sheet.
 2. Open the Script Editor from Tools > Script Editor.
-3. Copy the content of the .gs file (within the .unitypackage) to the Script Editor.
+3. Copy the content of the .gs file (within the .unitypackage) to Code.gs.
 4. Save the project and give it a name.
 5. From the menu, Publish < Deploy as web app...
 6. In the Deploy as web app popup, make sure you Execute the app as your own account and **Who has access to the app** is set to *Anyone, even anonymous*.

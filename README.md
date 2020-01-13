@@ -11,7 +11,7 @@ Because this asset almost does nothing about security things (hope Google will h
 ## Google sheets side
 1. Create a new Google sheet.
 2. Open the Script Editor from Tools > Script Editor.
-3. Copy the content of the .gs file (within the .unitypackage) to Code.gs.
+3. Copy the content of *Assets/Umbrella/Databse/Database.gs* (for Database) or *Assets/Umbrella/Ranking/Ranking.gs* (for Ranking) to Code.gs within the Script Editor.
 4. Save the project and give it a name.
 5. From the menu, Publish < Deploy as web app...
 6. In the Deploy as web app popup, make sure you Execute the app as your own account and **Who has access to the app** is set to *Anyone, even anonymous*.
@@ -19,29 +19,29 @@ Because this asset almost does nothing about security things (hope Google will h
 8. If *This app isn't verified* pops up, at the left bottom corner, click *Advanced* > *Go to [your_project_name] (unsafe)* > *Allow* to verify your app. 
 ## Unity side (Database)
 1. Drag & Drop the *DatabaseManager* prefab into your scene hierarchy (the scene you want to do the data communication).
-2. From the prefab instance, paste the web app URL you copied previously to the *App Url* field.
+2. From the prefab instance, paste the web app URL you copied previously to the *App URL* field.
 3. Enter the sheet name of your default sheet into the *Default Sheet* field.
 4. You can now send any data to Google sheets using `DatabaseManager.Instance.SendDataAsync(data, handleResponseCallback, sheetName)` and get data from Google sheets use `DatabaseManager.Instance.GetDataAsync(key, handleResponseCallback, sheetName)`. You can also add `yield return` before these methods to wait until the *handleResponseCallback* returns.
 5. For specific usage, please refer to the sample scene and scripts.
 ## Unity side (Ranking)
 1. Drag & Drop the *RankingManager* prefab into your scene hierarchy (the scene you want to do the data communication).
-2. In the *RankingSettings* scriptableobject asset, paste the web app URL you copied previously to the *App Url* field.
+2. In the *RankingSettings* scriptableobject asset, paste the web app URL you copied previously to the *App URL* field.
 3. You can set different kinds of rankings by adding entries to the *Ranking Request Settings* array. *Ranking Name* refers to the name of the ranking, *Ranking Number* tells how many rows you want to get (e.g., ranking number of 3 will get you only the first three places of the ranking list), and *Order By* allows you to choose from ascending (ASC) or descending (DESC) order.
 4. You can now send score to Google sheets using `RankingManager.Instance.SendScoreAsync(playerName, score, handleResponseCallback, rankingRequestIndex)` and get the ranking list from Google sheets using `RankingManager.Instance.GetRankingListAsync(handleResponseCallback, rankingRequestIndex)`. If you want, add `yield return` before these methods to hang on and wait until the *handleResponseCallback* returns.
 5. For specific usage, please refer to the sample scene and scripts.
 
 # Demo
 ## Database
-* Send data to Google sheets.
+* Send data to Google sheets. The gif shows sending data using key value pairs.
 ![Send data to Google sheets](Demos/send_data.gif)
 
-* Update data in Google sheets.
+* Update data in Google sheets. The gif shows updating data by sending the key and a new value.
 ![Update data in Google sheets](Demos/update_data.gif)
 
 * Send another data. Note: Because Umbrella generates unique ids in Unity and saves them in PlayerPrefs, you should clear PlayerPrefs otherwise duplicated sending will overwrite the data already stored in Google sheets.
 ![Send another data](Demos/send_another_data.gif)
 
-* Get data from Google sheets by keys.
+* Get data from Google sheets by keys. The gifs shows getting data using a list of keys.
 ![Get data from Google sheets by keys](Demos/get_data.gif)
 
 * You can also get data by cell references.

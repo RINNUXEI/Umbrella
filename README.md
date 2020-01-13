@@ -16,6 +16,7 @@ Because this asset almost does nothing about security things (hope Google will h
 5. From the menu, Publish < Deploy as web app...
 6. In the Deploy as web app popup, make sure you Execute the app as your own account and **Who has access to the app** is set to *Anyone, even anonymous*.
 7. Click Deploy and copy the web app URL.
+8. If *This app isn't verified* pops up, at the left bottom corner, click *Advanced* > *Go to [your_project_name] (unsafe)* > *Allow* to verify your app. 
 ## Unity side (Database)
 1. Drag & Drop the *DatabaseManager* prefab into your scene hierarchy (the scene you want to do the data communication).
 2. From the prefab instance, paste the web app URL you copied previously to the *App Url* field.

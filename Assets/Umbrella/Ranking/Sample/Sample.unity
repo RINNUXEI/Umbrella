@@ -146,7 +146,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000003450908, y: -0.00000021693933}
+  m_AnchoredPosition: {x: 0.0000147319115, y: -0.00000021693933}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &119818211
@@ -1871,7 +1871,7 @@ GameObject:
   - component: {fileID: 1195712887}
   - component: {fileID: 1195712885}
   m_Layer: 5
-  m_Name: RankingSettingIndexDropdown
+  m_Name: RankingSettingDropdown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2501,7 +2501,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _nameInput: {fileID: 2115623589}
   _scoreInput: {fileID: 223567045}
-  _rankingSettingIndexInput: {fileID: 1195712885}
+  _rankingSettingDropdown: {fileID: 1195712885}
   _sendScoreButton: {fileID: 1177013239}
   _getRankingButton: {fileID: 564569311}
   _myRanking: {fileID: 1966403850}

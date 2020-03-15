@@ -16,7 +16,7 @@ namespace Umbrella.Ranking
         {
             _view.InitializeRankingSettingOptions(_settings.RankingRequestSettings.Select(s => s.RankingName));
 
-            _view.OnClickSendScoreButton.AddListener(() => RankingManager.Instance.SendScoreAsync(_view.PlayerName, _view.PlayerScore, UpdateRankingListView, _view.CurrentRankingSettingIndex));
+            _view.OnClickSendScoreButton.AddListener(() => RankingManager.Instance.SendScoreAsync(_view.PlayerName, _view.PlayerScore, UpdateRankingListView, _view.CurrentRankingName));
 
             _view.OnClickGetRankingButton.AddListener(() => StartCoroutine(CT_GetRankingList()));
 
@@ -26,7 +26,7 @@ namespace Umbrella.Ranking
         private IEnumerator CT_GetRankingList()
         {
             // Wait until the ranking data has been retrieved.
-            yield return RankingManager.Instance.GetRankingListAsync(UpdateRankingListView, rankingRequestIndex: _view.CurrentRankingSettingIndex);
+            yield return RankingManager.Instance.GetRankingListAsync(UpdateRankingListView, _view.CurrentRankingName);
         }
 
         private void UpdateRankingListView(List<RankingData> rankingDataList)

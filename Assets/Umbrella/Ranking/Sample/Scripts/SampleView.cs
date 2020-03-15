@@ -10,7 +10,7 @@ namespace Umbrella.Ranking
     {
         [SerializeField] private InputField _nameInput;
         [SerializeField] private InputField _scoreInput;
-        [SerializeField] private Dropdown _rankingSettingIndexInput;
+        [SerializeField] private Dropdown _rankingSettingDropdown;
         [SerializeField] private Button _sendScoreButton;
         [SerializeField] private Button _getRankingButton;
         [SerializeField] private Text _myRanking;
@@ -21,7 +21,7 @@ namespace Umbrella.Ranking
         public Button.ButtonClickedEvent OnClickClearButton => _clearButton.onClick;
         public string PlayerName => _nameInput.text;
         public int PlayerScore => Int32.Parse(_scoreInput.text);
-        public int CurrentRankingSettingIndex { get; private set; }
+        public string CurrentRankingName { get; private set; }
 
         public void SetMyRanking(string ranking)
         {
@@ -31,9 +31,8 @@ namespace Umbrella.Ranking
 
         public void InitializeRankingSettingOptions(IEnumerable<string> rankingNames)
         {
-            var options = rankingNames.Select(name => new Dropdown.OptionData(name)).ToList();
-            _rankingSettingIndexInput.AddOptions(options);
-            _rankingSettingIndexInput.onValueChanged.AddListener(index => CurrentRankingSettingIndex = index);
+            _rankingSettingDropdown.AddOptions(rankingNames.ToList());
+            _rankingSettingDropdown.onValueChanged.AddListener(index => CurrentRankingName = _rankingSettingDropdown.options[index].text);
         }
     }
 }

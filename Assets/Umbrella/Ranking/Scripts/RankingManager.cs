@@ -19,6 +19,9 @@ namespace Umbrella.Ranking
         /// </summary>
         public static RankingManager Instance { get; private set; }
 
+        private Dictionary<string, RankingRequestSetting> _rankingRequestSettings;
+        private string _defaultRankingName;
+
         private void Awake()
         {
             if (Instance == null)
@@ -29,6 +32,14 @@ namespace Umbrella.Ranking
             {
                 Destroy(gameObject);
             }
+
+            _rankingRequestSettings = new Dictionary<string, RankingRequestSetting>();
+            for (int i = 0; i < _rankingSettings.RankingRequestSettings.Length; i++)
+            {
+                var setting = _rankingSettings.RankingRequestSettings[i];
+                if (i == 0) _defaultRankingName = setting.RankingName;
+                _rankingRequestSettings[setting.RankingName] = setting;
+            }
         }
 
         /// <summary>
@@ -38,11 +49,11 @@ namespace Umbrella.Ranking
         /// <param name="name">Name of the player. Player name can be changed each time you send a score.</param>
         /// <param name="score">Score of the player.</param>
         /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="rankingRequestIndex">Index of the ranking request settings array.</param>
+        /// <param name="rankingName">Name of the requested ranking.</param>
         /// <returns></returns>
-        public CustomYieldInstruction SendScoreAsync(string name, float score, Action<List<RankingData>> handleResponse, int rankingRequestIndex = 0)
+        public CustomYieldInstruction SendScoreAsync(string name, float score, Action<List<RankingData>> handleResponse, string rankingName = "")
         {
-            var setting = GetRankingRequestSetting(rankingRequestIndex);
+            var setting = GetRankingRequestSetting(rankingName);
             if (setting == null) return new WaitUntil(() => true);
 
             if (_dataHandler == null) _dataHandler = new GSSDataHub(_rankingSettings.AppURL);
@@ -67,11 +78,11 @@ namespace Umbrella.Ranking
         /// Get ranking data list from Google sheets.
         /// </summary>
         /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="rankingRequestIndex">Index of the ranking request settings array.</param>
+        /// <param name="rankingName">Name of the requested ranking.</param>
         /// <returns></returns>
-        public CustomYieldInstruction GetRankingListAsync(Action<List<RankingData>> handleResponse, int rankingRequestIndex = 0)
+        public CustomYieldInstruction GetRankingListAsync(Action<List<RankingData>> handleResponse, string rankingName = "")
         {
-            var setting = GetRankingRequestSetting(rankingRequestIndex);
+            var setting = GetRankingRequestSetting(rankingName);
             if (setting == null) return new WaitUntil(() => true);
 
             if (_dataHandler == null) _dataHandler = new GSSDataHub(_rankingSettings.AppURL);
@@ -89,7 +100,7 @@ namespace Umbrella.Ranking
             });
         }
 
-        private RankingRequestSetting GetRankingRequestSetting(int index)
+        private RankingRequestSetting GetRankingRequestSetting(string rankingName)
         {
             var settings = _rankingSettings.RankingRequestSettings;
             if (settings == null || settings.Length == 0)
@@ -98,13 +109,14 @@ namespace Umbrella.Ranking
                 return null;
             }
 
-            if (index < 0 || index >= settings.Length)
+            if (string.IsNullOrEmpty(rankingName)) rankingName = _defaultRankingName;
+            if (!_rankingRequestSettings.TryGetValue(rankingName, out var setting))
             {
-                Debug.LogError("<color=blue>[Ranking]</color>Ranking request setting index out of range. Check RankingSettings.asset.");
+                Debug.LogError($"<color=blue>[Ranking]</color>{rankingName} has not been set yet. Add this ranking in RankingSettings.asset.");
                 return null;
             }
 
-            return settings[index];
+            return setting;
         }
 
         private List<RankingData> ParseResponse(object response)

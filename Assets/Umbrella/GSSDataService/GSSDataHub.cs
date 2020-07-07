@@ -28,9 +28,9 @@ namespace Umbrella.GSSDataService
         /// <param name="methodName">Method name specified in Google App Script, the server side will call this method to handle the sending data.</param>
         /// <param name="sheetName">Sheet name of the Google sheet to communicate with.</param>
         /// <param name="data">Data to be sent.</param>
-        /// <param name="handleResponse">Method will be called to handle response.</param>
+        /// <param name="responseHandler">Method will be called to handle response.</param>
         /// <returns></returns>
-        public CustomYieldInstruction SendDataAsync(MonoBehaviour context, string methodName, IDictionary<string, object> data, Action<object> handleResponse = null)
+        public CustomYieldInstruction SendDataAsync(MonoBehaviour context, string methodName, IDictionary<string, object> data, Action<object> responseHandler = null)
         {
             var strData = Json.Serialize(data);
 
@@ -39,12 +39,12 @@ namespace Umbrella.GSSDataService
             formData.Add(new MultipartFormDataSection(Const.Payload, strData));
 
             bool complete = false;
-            context.StartCoroutine(CT_SendData(formData, status => complete = status, handleResponse));
+            context.StartCoroutine(CT_SendData(formData, status => complete = status, responseHandler));
 
             return new WaitUntil(() => complete);
         }
 
-        private IEnumerator CT_SendData(List<IMultipartFormSection> formData, Action<bool> updateStatus, Action<object> handleResponse = null)
+        private IEnumerator CT_SendData(List<IMultipartFormSection> formData, Action<bool> updateStatus, Action<object> responseHandler = null)
         {
             updateStatus(false);
 
@@ -66,13 +66,12 @@ namespace Umbrella.GSSDataService
                     var response = Json.Deserialize(www.downloadHandler.text);
                     string message = response as string;
                     if (message != null && message.Contains("Error")) Debug.LogError($"<color=blue>[GSSDataService]</color> Getting data from Google Sheets failed. {message}");
-                    else handleResponse?.Invoke(response);
+                    else responseHandler?.Invoke(response);
                 }
                 catch (InvalidCastException e)
                 {
                     Debug.LogError($"<color=blue>[GSSDataService]</color> Parsing result from Google Sheets failed. Error: {e.Message}");
                 }
-
             }
 
             updateStatus(true);

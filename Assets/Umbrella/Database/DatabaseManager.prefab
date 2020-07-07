@@ -43,5 +43,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5040b7b44d37642eaa3f2697c528d4c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _appURL: 
-  _defaultSheet: 
+  _settings: {fileID: 11400000, guid: 32f696b7da020441a8db2da0cb6898a9, type: 2}

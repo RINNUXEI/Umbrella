@@ -9,127 +9,43 @@ namespace Umbrella.Database
     /// <summary>
     /// A singleton class manages sending and getting data.
     /// </summary>
-    public class DatabaseManager : MonoBehaviour
+    public class DatabaseManager : GSSDataSender<DatabaseManager>
     {
-        [SerializeField] private string _appURL;
-        [SerializeField] private string _defaultSheet = "Sheet1";
+        [SerializeField] private DatabaseSettings _settings;
 
-        private GSSDataHub _dataHub;
-
-        /// <summary>
-        /// Singleton class instance.
-        /// </summary>
-        public static DatabaseManager Instance { get; private set; }
-
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else if (Instance != this)
-            {
-                Destroy(gameObject);
-            }
-        }
+        protected override string AppURL => _settings.AppURL;
 
         /// <summary>
-        /// Send a single data to Google Sheets.
+        /// Send data to Google Sheets.
         /// You can use yield to wait until the process completes.
         /// </summary>
-        /// <param name="key">Key (name) of the data.</param>
-        /// <param name="value">Value (content) of the data.</param>
-        /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="sheetName">Sheet name of the Google sheet to communicate with.</param>
+        /// <param name="data">Key value pairs of the data.</param>
+        /// <param name="sheetName">Sheet name of the Google sheet to communicate with, if not provided the default sheet name will be used.</param>
         /// <returns></returns>
-        public CustomYieldInstruction SendDataAsync(string key, object value, Action<string> handleResponse = null, string sheetName = "")
+        public CustomYieldInstruction SendDataAsync(IDictionary<string, object> data, string sheetName = null)
         {
-            return SendDataAsync(new Dictionary<string, object> { { key, value } }, handleResponse, sheetName);
-        }
-
-        /// <summary>
-        /// Send mutiple data to Google Sheets.
-        /// You can use yield to wait until the process completes.
-        /// </summary>
-        /// <param name="keyValuePairs">Key value pairs of the data.</param>
-        /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="sheetName">Sheet name of the Google sheet to communicate with.</param>
-        /// <returns></returns>
-        public CustomYieldInstruction SendDataAsync(IDictionary<string, object> keyValuePairs, Action<string> handleResponse = null, string sheetName = "")
-        {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
-
             var sendData = new Dictionary<string, object>();
-            sendData[DatabaseConsts.UserId] = Helpers.GetUserID();
-            sendData[DatabaseConsts.KeyValuePairs] = keyValuePairs;
-
-            if (string.IsNullOrEmpty(sheetName)) sheetName = _defaultSheet;
-            return _dataHub.SendDataAsync(this, DatabaseConsts.SaveDataMethod, sheetName, sendData, response =>
-            {
-                if (handleResponse == null) return;
-
-                var result = response.ToString();
-                handleResponse.Invoke(result);
-            });
+            sendData[Const.UserId] = LocalSaveDataHelper.GetUserID();
+            sendData[Const.SheetName] = sheetName ?? _settings.DefaultSheetName;
+            sendData[Const.Data] = data;
+            return SendRequestAsync(Const.SaveDataMethod, sendData, null);
         }
 
         /// <summary>
-        /// Get a single data from Google sheets.
+        /// Get  data from Google sheets.
         /// You can use yield to wait until the process completes.
         /// </summary>
-        /// <param name="key">Key (name) of the data.</param>
-        /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="sheetName">Sheet name of the Google sheet to communicate with.</param>
+        /// <param name="keys">List of data keys.</param>
+        /// <param name="responseHandler">Method that will be called to handle response.</param>
+        /// <param name="sheetName">Sheet name of the Google sheet to communicate with, if not provided the default sheet name will be used.</param>
         /// <returns></returns>
-        public CustomYieldInstruction GetDataAsync(string key, Action<string> handleResponse, string sheetName = "")
+        public CustomYieldInstruction GetDataAsync(IList<string> keys, Action<IList<string>> responseHandler, string sheetName = null)
         {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
-
             var sendData = new Dictionary<string, object>();
-            sendData[DatabaseConsts.UserId] = Helpers.GetUserID();
-            sendData[DatabaseConsts.Keys] = new string[] { key };
-
-            if (string.IsNullOrEmpty(sheetName)) sheetName = _defaultSheet;
-            return _dataHub.SendDataAsync(this, DatabaseConsts.GetDataMethod, sheetName, sendData, response =>
-            {
-                if (handleResponse == null) return;
-
-                var results = (IList)response;
-                if (results == null || results.Count == 0) return;
-
-                var result = results[0].ToString();
-                handleResponse.Invoke(result);
-            });
-        }
-
-        /// <summary>
-        /// Get mutiple data from Google sheets.
-        /// You can use yield to wait until the process completes.
-        /// </summary>
-        /// <param name="keys">A list of data keys.</param>
-        /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="sheetName">Sheet name of the Google sheet to communicate with.</param>
-        /// <returns></returns>
-        public CustomYieldInstruction GetDataAsync(IList<string> keys, Action<IList<string>> handleResponse, string sheetName = "")
-        {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
-
-            var sendData = new Dictionary<string, object>();
-            sendData[DatabaseConsts.UserId] = Helpers.GetUserID();
-            sendData[DatabaseConsts.Keys] = keys;
-
-            if (string.IsNullOrEmpty(sheetName)) sheetName = _defaultSheet;
-            return _dataHub.SendDataAsync(this, DatabaseConsts.GetDataMethod, sheetName, sendData, response =>
-            {
-                if (handleResponse == null) return;
-
-                var results = (IList)response;
-                if (results == null || results.Count == 0) return;
-
-                var values = new List<string>();
-                foreach (var result in results) values.Add(result.ToString());
-                handleResponse.Invoke(values);
-            });
+            sendData[Const.UserId] = LocalSaveDataHelper.GetUserID();
+            sendData[Const.SheetName] = sheetName ?? _settings.DefaultSheetName;
+            sendData[Const.Data] = keys;
+            return SendRequestAsync(Const.GetDataMethod, sendData, response => responseHandler?.Invoke(ParseResponse(response)));
         }
 
         /// <summary>
@@ -137,28 +53,22 @@ namespace Umbrella.Database
         /// You can use yield to wait until the process completes.
         /// </summary>
         /// <param name="cellReference">The cell range to retrieve data from.</param>
-        /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="sheetName">Sheet name of the Google sheet to communicate with.</param>
+        /// <param name="responseHandler">Method that will be called to handle response.</param>
+        /// <param name="sheetName">Sheet name of the Google sheet to communicate with, if not provided the default sheet name will be used.</param>
         /// <returns></returns>
-        public CustomYieldInstruction GetDataAsync(string cellReference, Action<IList<string>> handleResponse, string sheetName = "")
+        public CustomYieldInstruction GetDataAsync(string cellReference, Action<IList<string>> responseHandler, string sheetName = null)
         {
-            if (_dataHub == null) _dataHub = new GSSDataHub(_appURL);
-
             var sendData = new Dictionary<string, object>();
-            sendData[DatabaseConsts.CellReference] = cellReference;
+            sendData[Const.SheetName] = sheetName ?? _settings.DefaultSheetName;
+            sendData[Const.CellReference] = cellReference;
+            return SendRequestAsync(Const.GetDataMethod, sendData, response => responseHandler?.Invoke(ParseResponse(response)));
+        }
 
-            if (string.IsNullOrEmpty(sheetName)) sheetName = _defaultSheet;
-            return _dataHub.SendDataAsync(this, DatabaseConsts.GetDataMethod, sheetName, sendData, response =>
-            {
-                if (handleResponse == null) return;
-
-                var results = (IList)response;
-                if (results == null || results.Count == 0) return;
-
-                var values = new List<string>();
-                foreach (var result in results) values.Add(result.ToString());
-                handleResponse.Invoke(values);
-            });
+        private IList<string> ParseResponse(object response)
+        {
+            var resultList = new List<string>();
+            foreach (var result in (IList)response) resultList.Add(result.ToString());
+            return resultList;
         }
     }
 }

@@ -1,13 +1,12 @@
 // Constants shared by Unity and this App Script.
 var CONST = {
   Method : "method",
-  SheetName: "sheet",
-  Data: "data",
+  Payload: "payload",
   UserId: "userId",
-  KeyValuePairs: "kvps",
-  Keys : "keys",
-  SaveData: "saveData",
-  GetData: "getData",
+  SheetName : "sheet",
+  Data: "data",
+  SaveDataMethod: "saveData",
+  GetDataMethod: "getData",
   CellReference: "cellRef"
 };
 
@@ -15,22 +14,20 @@ function doPost(e) {
   var request = e.parameter;
   var method = request[CONST.Method];
   
-  if(method == CONST.SaveData){
-    return saveData(request);
-  }else if(method == CONST.GetData) {
-    return getData(request);
+  if(method == CONST.SaveDataMethod){
+    return saveData(request[CONST.Payload]);
+  }else if(method == CONST.GetDataMethod) {
+    return getData(request[CONST.Payload]);
   }
   
   return ContentService.createTextOutput("Error: Invalid method");
 }
 
-function saveData(request) {
-  var sheetName = request[CONST.SheetName];
-  var data = request[CONST.Data];
-  var jsonData = JSON.parse(data);
-
+function saveData(payload) {
+  var jsonData = JSON.parse(payload);
   var userId = jsonData[CONST.UserId];
-  var kvps = jsonData[CONST.KeyValuePairs];
+  var sheetName = jsonData[CONST.SheetName];
+  var data = jsonData[CONST.Data];
   
   // Created time
   var time = Utilities.formatDate(new Date(), "GMT+9", "yyyy/MM/dd HH:mm:ss");
@@ -52,8 +49,8 @@ function saveData(request) {
   var row = findRowByUserId(sheetData, userId);
   if(row != 0){
     // User id already exists
-    for(var key in kvps){
-      var value = kvps[key];
+    for(var key in data){
+      var value = data[key];
       // Find whether the key of the data to be saved aleardy exists
       var column = findColumnByKey(header, key);
       if(column != 0){
@@ -68,20 +65,20 @@ function saveData(request) {
       }
     }
   }else{
-     // Insert header title if it has not been set
+    // Insert header title if it has not been set
     if(header == null || header.length < 2){
       var values = [["userId", "updateTime"]];
       sheet.getRange(1, 1, 1, 2).setValues(values);
       header = values[0];
     }
-                                    
+    
     // Appends a new row
     var content = [];
     for(var i = 0; i < header.length; i++) content.push("");
     content[0] = userId;
     content[1] = time;
-    for(var key in kvps){
-      var value = kvps[key];
+    for(var key in data){
+      var value = data[key];
       var column = findColumnByKey(header, key);
       if(column != 0){
         content[column - 1] = value;
@@ -99,14 +96,11 @@ function saveData(request) {
   return ContentService.createTextOutput("Save data succeeded");
 }
 
-function getData(request) {
-  var sheetName = request[CONST.SheetName];
-  var data = request[CONST.Data];
-  var jsonData = JSON.parse(data);
-  
+function getData(payload) {
+  var jsonData = JSON.parse(payload);
   var userId = jsonData[CONST.UserId];
-  var keys = jsonData[CONST.Keys];
-  
+  var sheetName = jsonData[CONST.SheetName];
+  var keys = jsonData[CONST.Data];
   var cellRef = jsonData[CONST.CellReference];
   
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -116,12 +110,12 @@ function getData(request) {
   }
   
   if(cellRef){
-    var aa = sheet.getRange(cellRef).getValues();
-    var a = []
-    for(var i = 0; i < aa.length; i++){
-      a = a.concat(aa[i]);
+    var values = sheet.getRange(cellRef).getValues();
+    var result = []
+    for(var i = 0; i < values.length; i++){
+      result = result.concat(values[i]);
     }
-    return ContentService.createTextOutput(JSON.stringify(a));
+    return ContentService.createTextOutput(JSON.stringify(result));
   }
   
   var sheetData = sheet.getDataRange().getValues();

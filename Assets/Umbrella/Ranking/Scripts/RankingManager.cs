@@ -1,161 +1,104 @@
-﻿using UnityEngine;
-using Umbrella.GSSDataService;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Umbrella.GSSDataService;
+using UnityEngine;
 
 namespace Umbrella.Ranking
 {
     /// <summary>
     /// A singleton class manages sending and getting ranking data.
     /// </summary>
-    public class RankingManager : MonoBehaviour
+    public class RankingManager : GSSDataSender<RankingManager>
     {
-        [SerializeField] private RankingSettings _rankingSettings;
-        private GSSDataHub _dataHandler;
+        [SerializeField] private RankingSettings _settings;
+
+        protected override string AppURL => _settings.AppURL;
 
         /// <summary>
-        /// Singleton class instance.
+        /// Create a SendScoreRequestData object using the default setting.
         /// </summary>
-        public static RankingManager Instance { get; private set; }
-
-        private Dictionary<string, RankingRequestSetting> _rankingRequestSettings;
-        private string _defaultRankingName;
-
-        private void Awake()
+        /// <param name="score">Score</param>
+        /// <returns></returns>
+        public SendScoreRequestData CreateDefaultSendScoreRequest(float score)
         {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else if (Instance != this)
-            {
-                Destroy(gameObject);
-            }
-
-            _rankingRequestSettings = new Dictionary<string, RankingRequestSetting>();
-            for (int i = 0; i < _rankingSettings.RankingRequestSettings.Length; i++)
-            {
-                var setting = _rankingSettings.RankingRequestSettings[i];
-                if (i == 0) _defaultRankingName = setting.RankingName;
-                _rankingRequestSettings[setting.RankingName] = setting;
-            }
+            return new SendScoreRequestData(score, _settings.DefaultRankingRequestData);
         }
 
         /// <summary>
-        /// Send score to Google sheets.
+        /// Create a RankingRequestData object using the default setting.
+        /// </summary>
+        /// <returns></returns>
+        public RankingRequestData CreateDefaultRankingRequest()
+        {
+            return new RankingRequestData(_settings.DefaultRankingRequestData);
+        }
+
+        /// <summary>
+        /// Send multiple scores to Google sheets.
         /// You can use yield to wait until the process completes.
         /// </summary>
-        /// <param name="name">Name of the player. Player name can be changed each time you send a score.</param>
-        /// <param name="score">Score of the player.</param>
-        /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="rankingName">Name of the requested ranking.</param>
+        /// <param name="requestDataList">List of request data.</param>
+        /// <param name="responseHandler">Method that will be called to handle response.</param>
         /// <returns></returns>
-        public CustomYieldInstruction SendScoreAsync(string name, float score, Action<List<RankingData>> handleResponse, string rankingName = "")
+        public CustomYieldInstruction SendScoresAsync(IList<SendScoreRequestData> requestDataList, Action<IList<RankingResponseData>> responseHandler = null)
         {
-            var setting = GetRankingRequestSetting(rankingName);
-            if (setting == null) return new WaitUntil(() => true);
-
-            if (_dataHandler == null) _dataHandler = new GSSDataHub(_rankingSettings.AppURL);
-
-            var data = new Dictionary<string, object>();
-            data[RankingDataConsts.PlayerId] = Helpers.GetUserID();
-            data[RankingDataConsts.PlayerName] = name;
-            data[RankingDataConsts.PlayerScore] = score;
-            data[RankingDataConsts.OrderBy] = setting.OrderBy.ToString();
-            data[RankingDataConsts.RequestRankingNumber] = setting.RankingNumber;
-
-            return _dataHandler.SendDataAsync(this, RankingDataConsts.SaveScoreMethod, setting.RankingName, data, response =>
-            {
-                if (handleResponse == null) return;
-
-                var rankingDataList = ParseResponse(response);
-                handleResponse.Invoke(rankingDataList);
-            });
+            var data = CreateSendingData(requestDataList);
+            data[Const.PlayerName] = LocalSaveDataHelper.GetUserName();
+            data[Const.PlayerScore] = requestDataList.Select(d => d.Score).ToArray();
+            return SendRequestAsync(Const.SaveScoreMethod, data, response => responseHandler?.Invoke(ParseResponse(response)));
         }
 
         /// <summary>
         /// Get ranking data list from Google sheets.
+        /// You can use yield to wait until the process completes.
         /// </summary>
-        /// <param name="handleResponse">Method that will be called to handle response.</param>
-        /// <param name="rankingName">Name of the requested ranking.</param>
+        /// <param name="requestDataList">List of request data.</param>
+        /// <param name="responseHandler">Method that will be called to handle response.</param>
         /// <returns></returns>
-        public CustomYieldInstruction GetRankingListAsync(Action<List<RankingData>> handleResponse, string rankingName = "")
+        public CustomYieldInstruction GetRankingListsAsync(IList<RankingRequestData> requestDataList, Action<IList<RankingResponseData>> responseHandler)
         {
-            var setting = GetRankingRequestSetting(rankingName);
-            if (setting == null) return new WaitUntil(() => true);
+            var data = CreateSendingData(requestDataList);
+            return SendRequestAsync(Const.GetRankingMethod, data, response => responseHandler?.Invoke(ParseResponse(response)));
+        }
 
-            if (_dataHandler == null) _dataHandler = new GSSDataHub(_rankingSettings.AppURL);
-
+        private IDictionary<string, object> CreateSendingData(IEnumerable<RankingRequestData> requestDataList)
+        {
             var data = new Dictionary<string, object>();
-            data[RankingDataConsts.OrderBy] = setting.OrderBy.ToString();
-            data[RankingDataConsts.RequestRankingNumber] = setting.RankingNumber;
-
-            return _dataHandler.SendDataAsync(this, RankingDataConsts.GetRankingMethod, setting.RankingName, data, response =>
-            {
-                if (handleResponse == null) return;
-
-                var rankingDataList = ParseResponse(response);
-                handleResponse.Invoke(rankingDataList);
-            });
+            data[Const.PlayerId] = LocalSaveDataHelper.GetUserID();
+            data[Const.RankingName] = requestDataList.Select(d => d.RankingName).ToArray();
+            data[Const.RankingType] = requestDataList.Select(d => d.RankingType.ToString()).ToArray();
+            data[Const.RankingNumber] = requestDataList.Select(d => d.RankingNumber).ToArray();
+            data[Const.RankingOrderBy] = requestDataList.Select(d => d.OrderBy.ToString()).ToArray();
+            return data;
         }
 
-        private RankingRequestSetting GetRankingRequestSetting(string rankingName)
+        private IList<RankingResponseData> ParseResponse(object response)
         {
-            var settings = _rankingSettings.RankingRequestSettings;
-            if (settings == null || settings.Length == 0)
+            var responseDataList = new List<RankingResponseData>();
+            foreach (IDictionary data in (IList)response)
             {
-                Debug.LogError("<color=blue>[Ranking]</color>Ranking request setting has not been set. Add at least one setting in RankingSettings.asset.");
-                return null;
+                var rankingName = data[Const.RankingName].ToString();
+                var aroundMeRankingList = ParseRankingDataList(data[Const.AroundMeRanking]);
+                var topRankingList = ParseRankingDataList(data[Const.TopRanking]);
+                responseDataList.Add(new RankingResponseData(rankingName, aroundMeRankingList, topRankingList));
             }
+            return responseDataList;
 
-            if (string.IsNullOrEmpty(rankingName)) rankingName = _defaultRankingName;
-            if (!_rankingRequestSettings.TryGetValue(rankingName, out var setting))
+            IList<RankingData> ParseRankingDataList(object dataList)
             {
-                Debug.LogError($"<color=blue>[Ranking]</color>{rankingName} has not been set yet. Add this ranking in RankingSettings.asset.");
-                return null;
+                var rankingDataList = new List<RankingData>();
+                foreach (IDictionary data in (IList)dataList)
+                {
+                    var playerId = data[Const.PlayerId].ToString();
+                    var playerName = data[Const.PlayerName].ToString();
+                    var playerScore = float.Parse(data[Const.PlayerScore].ToString());
+                    var playerPosition = int.Parse(data[Const.PlayerPosition].ToString());
+                    rankingDataList.Add(new RankingData(playerId, playerName, playerScore, playerPosition));
+                }
+                return rankingDataList;
             }
-
-            return setting;
-        }
-
-        private List<RankingData> ParseResponse(object response)
-        {
-            var results = (IList)response;
-            if (results == null || results.Count == 0) return null;
-
-            var rankingDataList = new List<RankingData>();
-            foreach (IDictionary result in results)
-            {
-                var playerId = result[RankingDataConsts.PlayerId].ToString();
-                var playerName = result[RankingDataConsts.PlayerName].ToString();
-                var playerScore = result[RankingDataConsts.PlayerScore].ToString();
-                rankingDataList.Add(new RankingData(playerId, playerName, playerScore));
-            }
-            return rankingDataList;
-        }
-    }
-
-    /// <summary>
-    /// Ranking data object holds information to be displayed via UI.
-    /// </summary>
-    public class RankingData
-    {
-        public string PlayerId { get; private set; }
-        public string PlayerName { get; private set; }
-        public string PlayerScore { get; private set; }
-
-        /// <summary>
-        /// Does this ranking data belong to the player him/herself.
-        /// </summary>
-        /// <returns></returns>
-        public bool IsSelf => PlayerId == Helpers.GetUserID();
-
-        public RankingData(string playerId, string playerName, string playerScore)
-        {
-            PlayerId = playerId;
-            PlayerName = playerName;
-            PlayerScore = playerScore;
         }
     }
 }

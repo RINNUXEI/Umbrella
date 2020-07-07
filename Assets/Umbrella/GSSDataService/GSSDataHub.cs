@@ -30,14 +30,13 @@ namespace Umbrella.GSSDataService
         /// <param name="data">Data to be sent.</param>
         /// <param name="handleResponse">Method will be called to handle response.</param>
         /// <returns></returns>
-        public CustomYieldInstruction SendDataAsync(MonoBehaviour context, string methodName, string sheetName, Dictionary<string, object> data, Action<object> handleResponse = null)
+        public CustomYieldInstruction SendDataAsync(MonoBehaviour context, string methodName, IDictionary<string, object> data, Action<object> handleResponse = null)
         {
             var strData = Json.Serialize(data);
 
             var formData = new List<IMultipartFormSection>();
-            formData.Add(new MultipartFormDataSection("method", methodName));
-            formData.Add(new MultipartFormDataSection("sheet", sheetName));
-            formData.Add(new MultipartFormDataSection("data", strData));
+            formData.Add(new MultipartFormDataSection(Const.Method, methodName));
+            formData.Add(new MultipartFormDataSection(Const.Payload, strData));
 
             bool complete = false;
             context.StartCoroutine(CT_SendData(formData, status => complete = status, handleResponse));

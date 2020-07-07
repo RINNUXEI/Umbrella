@@ -1,13 +1,18 @@
 // Constants shared by both Unity and this App Script.
 var CONST = {
   Method : "method",
-  SheetName: "sheet",
-  Data: "data",
-  OrderBy: "orderBy",
+  Payload: "payload",
+  SaveScoreMethod : "saveScore",
+  GetRankingMethod : "getRanking",
+  AroundMeRanking : "aroundMe",
+  TopRanking : "top",
   PlayerId: "id",
-  PlayerName: "name",
-  Score: "score",
-  RequestRankingNumber: "rnum"
+  PlayerName : "playerName",
+  PlayerScore : "score",
+  RankingName : "rankingName",
+  RankingType : "type",
+  RankingNumber : "number",
+  RankingOrderBy : "orderBy"
 };
 
 // Constants particularly used in this App Script.
@@ -26,42 +31,45 @@ function doPost(e) {
   var request = e.parameter;
   var method = request[CONST.Method];
   
-  if(method == "saveScore"){
-    return saveScore(request);
-  }else if(method == "getRanking") {
-    return getRanking(request);
+  if(method == CONST.SaveScoreMethod){
+    return saveScores(request[CONST.Payload]);
+  }else if(method == CONST.GetRankingMethod){
+    return getRankings(request[CONST.Payload]);
   }
   
   return ContentService.createTextOutput("Invalid method");
 }
 
-function saveScore(request) {
-  var sheetName = request[CONST.SheetName];
-  var data = request[CONST.Data];
-  var jsonData = JSON.parse(data);
-
-  var playerId = jsonData[CONST.PlayerId];
+function saveScores(payload){
+  var jsonData = JSON.parse(payload);
+  var id = jsonData[CONST.PlayerId];
   var playerName = jsonData[CONST.PlayerName];
-  var score = jsonData[CONST.Score];
-  var requestRankingNum = jsonData[CONST.RequestRankingNumber];
+  var scores = jsonData[CONST.PlayerScore];
+  var rankingNames = jsonData[CONST.RankingName];
+  var types = jsonData[CONST.RankingType];
+  var numbers = jsonData[CONST.RankingNumber];
+  var orderBys = jsonData[CONST.RankingOrderBy];
   
-  // Change score stirng to number type.
-  score = +score;
-  
-  // Created time. Change the time zone of your region.
-  var time = Utilities.formatDate(new Date(), TIME_ZONE, TIME_FORMAT);
-  
-  // Get the sheet.
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadSheet.getSheetByName(sheetName);
+  
+  var results = [];
+  for(var i = 0; i < rankingNames.length; i++){
+    var result = saveScore(spreadSheet, id, playerName, scores[i], rankingNames[i], types[i], numbers[i], orderBys[i]);
+    results.push({rankingName: rankingNames[i], top: result.top, aroundMe: result.aroundMe});
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(results));
+}
+
+function saveScore(spreadSheet, id, playerName, score, rankingName, type, number, orderBy){
+  // Get the sheet.
+  var sheet = spreadSheet.getSheetByName(rankingName);
   if(sheet == null) {
     // If sheet does not exist, create one.
-    sheet = spreadSheet.insertSheet(sheetName);
+    sheet = spreadSheet.insertSheet(rankingName);
     // Add the header.
     sheet.appendRow([ID_HEADER, NAME_HEADER, SCORE_HEADER, CREATED_TIME_HEADER]);
   }
-  
-  var sortData = [];
   
   var range = sheet.getDataRange();
   if(range.isBlank()){
@@ -69,22 +77,24 @@ function saveScore(request) {
     sheet.appendRow([ID_HEADER, NAME_HEADER, SCORE_HEADER, CREATED_TIME_HEADER]);
   }
   
+  // Change score stirng to number type.
+  score = +score;
+  
+  // Created time. Change the time zone of your region.
+  var time = Utilities.formatDate(new Date(), TIME_ZONE, TIME_FORMAT);
+  
+  var sortData = [];
   // Get all sheet data.
-  var sheetData = sheet.getDataRange().getValues();
-  
-  // Shift one line to exclude the header. 
-  sheetData.shift();
-  
+  var sheetData = range.getValues();
   // Find the player with the provided ID.
   var findPlayer = false;
-  for (var i = 0; i < sheetData.length; i++) {
-    if (sheetData[i][ID_COLUMN] == playerId) {
-      // If found, we over write the data.
+  for (var i = 1; i < sheetData.length; i++) {
+    if (sheetData[i][ID_COLUMN] == id) {
+      // If found, overwrite the data.
       findPlayer = true;
       
-      // +1 becase Google sheets index starts with 1.
-      // +1 becase we excluded the header before, so totally +2 here.
-      var row = i + 2;
+      // +1 because Google sheets index starts with 1.
+      var row = i + 1;
       sheet.getRange(row, NAME_COLUMN + 1).setValue(playerName);
       sheet.getRange(row, SCORE_COLUMN + 1).setValue(score);
       sheet.getRange(row, CREATED_TIME_COLUMN + 1).setValue(time);
@@ -94,87 +104,133 @@ function saveScore(request) {
       sheetData[i][SCORE_COLUMN] = score;
     }
     
-    var sortObj = {id: sheetData[i][ID_COLUMN], name: sheetData[i][NAME_COLUMN], score: sheetData[i][SCORE_COLUMN], position: i};
+    var sortObj = {id: sheetData[i][ID_COLUMN], playerName: sheetData[i][NAME_COLUMN], score: sheetData[i][SCORE_COLUMN], pos: i};
     sortData.push(sortObj);
   }
   
   if(!findPlayer) {
     // If not found, append a new row.
     // Use appendRow to avoid lock cost cos it's an atom operation.
-    sheet.appendRow([playerId, playerName, score, time]);
-    sortData.push({id: playerId, name: playerName, score: score, position: sheetData.length});
+    sheet.appendRow([id, playerName, score, time]);
+    sortData.push({id: id, playerName: playerName, score: score, pos: sheetData.length});
   }
   
-   if(jsonData[CONST.OrderBy] === "ASC") {
-    sortData.sort(scoreCompareASC);
-  }else{
-    sortData.sort(scoreCompareDESC);
-  }
-  
-  var sendData = createSendData(sortData, requestRankingNum);
-  return ContentService.createTextOutput(JSON.stringify(sendData));
+  return getRankingLists(sortData, id, type, number, orderBy);
 }
 
-function getRanking(request) {
-  var sheetName = request[CONST.SheetName];
-  var data = request[CONST.Data];
-  var jsonData = JSON.parse(data);
-  
-  var requestRankingNum = jsonData[CONST.RequestRankingNumber];
+function getRankings(payload){
+  var jsonData = JSON.parse(payload);
+  var id = jsonData[CONST.PlayerId];
+  var rankingNames = jsonData[CONST.RankingName];
+  var types = jsonData[CONST.RankingType];
+  var numbers = jsonData[CONST.RankingNumber];
+  var orderBys = jsonData[CONST.RankingOrderBy];
   
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadSheet.getSheetByName(sheetName);
-  if(sheet == null) {
-    return ContentService.createTextOutput("Invalid sheet name");
+  
+  var results = [];
+  for(var i in rankingNames){
+    var result = getRanking(spreadSheet, id, rankingNames[i], types[i], numbers[i], orderBys[i]);
+    if(result != null){
+      results.push({rankingName: rankingNames[i], top: result.top, aroundMe: result.aroundMe});
+    }
   }
   
-  var sortData = [];
+  return ContentService.createTextOutput(JSON.stringify(results));
+}
+
+function getRanking(spreadSheet, id, rankingName, type, number, orderBy){
+  var sheet = spreadSheet.getSheetByName(rankingName);
+  if(sheet == null){
+    return null;
+  }
   
   var sheetData = sheet.getDataRange().getValues();
-  sheetData.shift();
   
-  for (var i = 0; i < sheetData.length; i++) {
-    var sortObj = {id: sheetData[i][ID_COLUMN], name: sheetData[i][NAME_COLUMN], score: sheetData[i][SCORE_COLUMN], position: i};
+  var sortData = [];
+  // Ranking data begins from the second line.
+  for (var i = 1; i < sheetData.length; i++) {
+    var sortObj = {id: sheetData[i][ID_COLUMN], playerName: sheetData[i][NAME_COLUMN], score: sheetData[i][SCORE_COLUMN], pos: i};
     sortData.push(sortObj);
   }
   
-  if(jsonData[CONST.OrderBy] === "ASC") {
-    sortData.sort(scoreCompareASC);
+  return getRankingLists(sortData, id, type, number, orderBy);
+}
+
+function getRankingLists(data, id, type, number, orderBy){
+  if(orderBy == "ASC") {
+    data.sort(scoreCompareASC);
   }else{
-    sortData.sort(scoreCompareDESC);
+    data.sort(scoreCompareDESC);
   }
   
-  var sendData = createSendData(sortData, requestRankingNum);
-  return ContentService.createTextOutput(JSON.stringify(sendData));
+  // Set pos to corresponding ranking position.
+  for(var i = 0; i < data.length; i++){
+    data[i].pos = i + 1;
+  }
+  
+  var topRankingList = [];
+  var aroundMeRankingList = [];
+  
+  if(type == "Top" || type == "TopAndAroundMe"){
+    topRankingList = data.slice(0, number);
+  }
+  
+  if(type == "AroundMe" || type == "TopAndAroundMe"){
+    var range = findAroundMeRankingRange(data, id, number);
+    if(range != null){
+      aroundMeRankingList = data.slice(range.start, range.end + 1);
+    }
+  }
+  
+  return {top: topRankingList, aroundMe: aroundMeRankingList};
 }
 
 // Sort the scores in ascending order, if two scores are equal, the early created one will come first.
 function scoreCompareASC(a, b) {
   if(a.score == b.score)
-    return a.position - b.position;
-  if(a.score > b.score)
-    return 1;
-  return -1;
+    return a.pos - b.pos;
+  return a.score - b.score;
 }
 
 // Sort the scores in descending order, if two scores are equal, the early created one will come first.
 function scoreCompareDESC(a, b) {
   if(a.score == b.score)
-    return a.position - b.position;
-  if(a.score < b.score)
-    return 1;
-  return -1;
+    return a.pos - b.pos;
+  return b.score - a.score;
 }
 
-// Format the sending data.
-function createSendData(data, num) {
-  var sendData = [];
-  for(var i = 0; i < data.length; i++)
-  {
-    if(i >= num) break;
-    var sendObj = {id: data[i].id, name: data[i].name, score: data[i].score};
-    sendData.push(sendObj);
+function findAroundMeRankingRange(data, myId, num) {
+  // Find my position.
+  var myPos = data.findIndex(d => d.id == myId);
+  if(myPos < 0) return null;
+  
+  var count = 0;
+  var left = myPos;
+  var right = myPos + 1;
+  
+  // Expand range from my position to each side until either side reaches its end.
+  while(left >= 0 && right < data.length && count < num){
+    count += 2;
+    left--;
+    right++;
   }
   
-  return sendData;
+  // If still needs elements, expand to the left side until reaching the start.
+  while(count < num && left >= 0){
+    count++;
+    left--;
+  }
+  
+  // If still needs elements, expand to the right side until reaching the end.
+  while(count < num && right < data.length){
+    count++;
+    right++;
+  }
+  
+  // Move back each side to match indices.
+  left++;
+  right--;
+  
+  return {start: left, end: right};
 }

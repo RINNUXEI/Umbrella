@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace Umbrella.Ranking
 {
-    public class RankingDataView : MonoBehaviour
+    public class SampleRankingDataView : MonoBehaviour
     {
         [SerializeField] private Text _order;
         [SerializeField] private Text _playerName;

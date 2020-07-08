@@ -13,25 +13,28 @@ namespace Umbrella.Ranking
 
         private void Start()
         {
+            _view.OnClickSendScoreButton.AddListener(() => StartCoroutine(CT_SendScore()));
+
             var rankingRequest = RankingManager.Instance.CreateDefaultRankingRequest();
-            _view.OnClickSendScoreButton.AddListener(() => StartCoroutine(CT_SendScore(rankingRequest)));
             _view.OnClickGetRankingButton.AddListener(() => StartCoroutine(CT_GetRankingLists(rankingRequest)));
+
             _view.RankingName = rankingRequest.RankingName;
             _view.PlayerName = RankingManager.Instance.UserName;
         }
 
-        private IEnumerator CT_SendScore(RankingRequestData rankingRequest)
+        private IEnumerator CT_SendScore()
         {
             RankingManager.Instance.UserName = _view.PlayerName;
 
-            var sendScoreRequest = new SendScoreRequestData(_view.PlayerScore, rankingRequest);
+            var sendScoreRequest = RankingManager.Instance.CreateDefaultSendScoreRequest(_view.PlayerScore);
+            sendScoreRequest.RankingName = _view.RankingName;
 
-            UnityEngine.Debug.Log($"Sending {rankingRequest.RankingName} ranking data ...");
+            UnityEngine.Debug.Log($"Sending {sendScoreRequest.RankingName} ranking data ...");
 
             // Wait until the ranking data has been retrieved.
             yield return RankingManager.Instance.SendScoresAsync(new List<SendScoreRequestData> { sendScoreRequest }, UpdateRankingLists);
 
-            UnityEngine.Debug.Log($"{rankingRequest.RankingName} ranking data updated.");
+            UnityEngine.Debug.Log($"{sendScoreRequest.RankingName} ranking data updated.");
         }
 
         private IEnumerator CT_GetRankingLists(RankingRequestData rankingRequest)

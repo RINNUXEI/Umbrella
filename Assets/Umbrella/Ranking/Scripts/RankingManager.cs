@@ -23,17 +23,22 @@ namespace Umbrella.Ranking
         /// <returns></returns>
         public SendScoreRequestData CreateDefaultSendScoreRequest(float score)
         {
-            return new SendScoreRequestData(score, _settings.DefaultRankingRequestData);
+            var defaultRankingRequest = _settings.GetDefaultRankingRequestDataInstance();
+            var requestData = new SendScoreRequestData
+            {
+                Score = score,
+                RankingName = defaultRankingRequest.RankingName,
+                TopRankingListSettings = defaultRankingRequest.TopRankingListSettings,
+                AroundMeRankingListSettings = defaultRankingRequest.AroundMeRankingListSettings
+            };
+            return requestData;
         }
 
         /// <summary>
         /// Create a RankingRequestData object using the default setting.
         /// </summary>
         /// <returns></returns>
-        public RankingRequestData CreateDefaultRankingRequest()
-        {
-            return new RankingRequestData(_settings.DefaultRankingRequestData);
-        }
+        public RankingRequestData CreateDefaultRankingRequest() => _settings.GetDefaultRankingRequestDataInstance();
 
         /// <summary>
         /// Send multiple scores to Google sheets.
@@ -44,9 +49,10 @@ namespace Umbrella.Ranking
         /// <returns></returns>
         public CustomYieldInstruction SendScoresAsync(IList<SendScoreRequestData> requestDataList, Action<IList<RankingResponseData>> responseHandler = null)
         {
-            var data = CreateSendingData(requestDataList);
+            var data = new Dictionary<string, object>();
+            data[Const.PlayerId] = LocalSaveDataHelper.GetUserID();
             data[Const.PlayerName] = LocalSaveDataHelper.GetUserName();
-            data[Const.PlayerScore] = requestDataList.Select(d => d.Score).ToArray();
+            data[Const.RankingRequest] = requestDataList.Select(r => SendScoreRequestDataSerializer.Serialize(r)).ToArray();
             return SendRequestAsync(Const.SaveScoreMethod, data, response => responseHandler?.Invoke(ParseResponse(response)));
         }
 
@@ -59,19 +65,10 @@ namespace Umbrella.Ranking
         /// <returns></returns>
         public CustomYieldInstruction GetRankingListsAsync(IList<RankingRequestData> requestDataList, Action<IList<RankingResponseData>> responseHandler)
         {
-            var data = CreateSendingData(requestDataList);
-            return SendRequestAsync(Const.GetRankingMethod, data, response => responseHandler?.Invoke(ParseResponse(response)));
-        }
-
-        private IDictionary<string, object> CreateSendingData(IEnumerable<RankingRequestData> requestDataList)
-        {
             var data = new Dictionary<string, object>();
             data[Const.PlayerId] = LocalSaveDataHelper.GetUserID();
-            data[Const.RankingName] = requestDataList.Select(d => d.RankingName).ToArray();
-            data[Const.RankingType] = requestDataList.Select(d => d.RankingType.ToString()).ToArray();
-            data[Const.RankingNumber] = requestDataList.Select(d => d.RankingNumber).ToArray();
-            data[Const.RankingOrderBy] = requestDataList.Select(d => d.OrderBy.ToString()).ToArray();
-            return data;
+            data[Const.RankingRequest] = requestDataList.Select(r => RankingRequestDataSerializer.Serialize(r)).ToArray();
+            return SendRequestAsync(Const.GetRankingMethod, data, response => responseHandler?.Invoke(ParseResponse(response)));
         }
 
         private IList<RankingResponseData> ParseResponse(object response)
@@ -79,26 +76,9 @@ namespace Umbrella.Ranking
             var responseDataList = new List<RankingResponseData>();
             foreach (IDictionary data in (IList)response)
             {
-                var rankingName = data[Const.RankingName].ToString();
-                var aroundMeRankingList = ParseRankingDataList(data[Const.AroundMeRanking]);
-                var topRankingList = ParseRankingDataList(data[Const.TopRanking]);
-                responseDataList.Add(new RankingResponseData(rankingName, aroundMeRankingList, topRankingList));
+                responseDataList.Add(RankingResponseDataDeserializer.Deserialize(data));
             }
             return responseDataList;
-
-            IList<RankingData> ParseRankingDataList(object dataList)
-            {
-                var rankingDataList = new List<RankingData>();
-                foreach (IDictionary data in (IList)dataList)
-                {
-                    var playerId = data[Const.PlayerId].ToString();
-                    var playerName = data[Const.PlayerName].ToString();
-                    var playerScore = float.Parse(data[Const.PlayerScore].ToString());
-                    var playerPosition = int.Parse(data[Const.PlayerPosition].ToString());
-                    rankingDataList.Add(new RankingData(playerId, playerName, playerScore, playerPosition));
-                }
-                return rankingDataList;
-            }
         }
     }
 }

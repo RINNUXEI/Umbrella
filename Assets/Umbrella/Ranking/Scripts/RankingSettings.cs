@@ -17,8 +17,17 @@ namespace Umbrella.Ranking
         public string AppURL => _appURL;
 
         /// <summary>
-        /// The default ranking request data.
+        /// Get an instance of the default ranking request data.
         /// </summary>
-        public RankingRequestData DefaultRankingRequestData => _defaultRankingRequestData;
+        /// <returns></returns>
+        public RankingRequestData GetDefaultRankingRequestDataInstance()
+        {
+            return new RankingRequestData
+            {
+                RankingName = _defaultRankingRequestData.RankingName,
+                TopRankingListSettings = _defaultRankingRequestData.TopRankingListSettings,
+                AroundMeRankingListSettings = _defaultRankingRequestData.AroundMeRankingListSettings
+            };
+        }
     }
 }

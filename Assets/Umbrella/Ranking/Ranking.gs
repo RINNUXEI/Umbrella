@@ -4,15 +4,15 @@ var CONST = {
   Payload: "payload",
   SaveScoreMethod : "saveScore",
   GetRankingMethod : "getRanking",
-  AroundMeRanking : "aroundMe",
-  TopRanking : "top",
   PlayerId: "id",
   PlayerName : "playerName",
   PlayerScore : "score",
+  RankingRequest : "request",
   RankingName : "rankingName",
-  RankingType : "type",
-  RankingNumber : "number",
-  RankingOrderBy : "orderBy"
+  TopRankingSettings : "top",
+  AroundMeRankingSettings : "aroundMe",
+  RankingTakeNumber : "number",
+  RankingOrderBy : "orderBy",
 };
 
 // Constants particularly used in this App Script.
@@ -44,24 +44,25 @@ function saveScores(payload){
   var jsonData = JSON.parse(payload);
   var id = jsonData[CONST.PlayerId];
   var playerName = jsonData[CONST.PlayerName];
-  var scores = jsonData[CONST.PlayerScore];
-  var rankingNames = jsonData[CONST.RankingName];
-  var types = jsonData[CONST.RankingType];
-  var numbers = jsonData[CONST.RankingNumber];
-  var orderBys = jsonData[CONST.RankingOrderBy];
+  var rankingReq = jsonData[CONST.RankingRequest];
   
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
   
   var results = [];
-  for(var i = 0; i < rankingNames.length; i++){
-    var result = saveScore(spreadSheet, id, playerName, scores[i], rankingNames[i], types[i], numbers[i], orderBys[i]);
-    results.push({rankingName: rankingNames[i], top: result.top, aroundMe: result.aroundMe});
+  for(var i in rankingReq){
+    var req = rankingReq[i];
+    var score = req[CONST.PlayerScore];
+    var rankingName = req[CONST.RankingName];
+    var topSettings = req[CONST.TopRankingSettings];
+    var aroundMeSettings = req[CONST.AroundMeRankingSettings];
+    var result = saveScore(spreadSheet, id, playerName, score, rankingName, topSettings, aroundMeSettings);
+    results.push({rankingName: rankingName, top: result.top, aroundMe: result.aroundMe});
   }
   
   return ContentService.createTextOutput(JSON.stringify(results));
 }
 
-function saveScore(spreadSheet, id, playerName, score, rankingName, type, number, orderBy){
+function saveScore(spreadSheet, id, playerName, score, rankingName, topSettings, aroundMeSettings){
   // Get the sheet.
   var sheet = spreadSheet.getSheetByName(rankingName);
   if(sheet == null) {
@@ -115,31 +116,32 @@ function saveScore(spreadSheet, id, playerName, score, rankingName, type, number
     sortData.push({id: id, playerName: playerName, score: score, pos: sheetData.length});
   }
   
-  return getRankingLists(sortData, id, type, number, orderBy);
+  return getRankingLists(sortData, id, topSettings, aroundMeSettings);
 }
 
 function getRankings(payload){
   var jsonData = JSON.parse(payload);
   var id = jsonData[CONST.PlayerId];
-  var rankingNames = jsonData[CONST.RankingName];
-  var types = jsonData[CONST.RankingType];
-  var numbers = jsonData[CONST.RankingNumber];
-  var orderBys = jsonData[CONST.RankingOrderBy];
+  var rankingReq = jsonData[CONST.RankingRequest];
   
   var spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
   
   var results = [];
-  for(var i in rankingNames){
-    var result = getRanking(spreadSheet, id, rankingNames[i], types[i], numbers[i], orderBys[i]);
+  for(var i in rankingReq){
+    var req = rankingReq[i];
+    var rankingName = req[CONST.RankingName];
+    var topSettings = req[CONST.TopRankingSettings];
+    var aroundMeSettings = req[CONST.AroundMeRankingSettings];
+    var result = getRanking(spreadSheet, id, rankingName, topSettings, aroundMeSettings);
     if(result != null){
-      results.push({rankingName: rankingNames[i], top: result.top, aroundMe: result.aroundMe});
+      results.push({rankingName: rankingName, top: result.top, aroundMe: result.aroundMe});
     }
   }
   
   return ContentService.createTextOutput(JSON.stringify(results));
 }
 
-function getRanking(spreadSheet, id, rankingName, type, number, orderBy){
+function getRanking(spreadSheet, id, rankingName, topSettings, aroundMeSettings){
   var sheet = spreadSheet.getSheetByName(rankingName);
   if(sheet == null){
     return null;
@@ -154,10 +156,42 @@ function getRanking(spreadSheet, id, rankingName, type, number, orderBy){
     sortData.push(sortObj);
   }
   
-  return getRankingLists(sortData, id, type, number, orderBy);
+  return getRankingLists(sortData, id, topSettings, aroundMeSettings);
 }
 
-function getRankingLists(data, id, type, number, orderBy){
+function getRankingLists(data, id, topSettings, aroundMeSettings){
+  var topRankingList = [];
+  var aroundMeRankingList = [];
+  
+  var topTakeNumber = topSettings[CONST.RankingTakeNumber];
+  var topOrderBy = topSettings[CONST.RankingOrderBy];
+  if(topTakeNumber > 0){
+    sortRankingList(data, topOrderBy);
+    topRankingList = data.slice(0, topTakeNumber);
+  }
+  
+  var aroundMeTakeNumber = aroundMeSettings[CONST.RankingTakeNumber];
+  var aroundMeOrderBy = aroundMeSettings[CONST.RankingOrderBy];
+  if(aroundMeTakeNumber > 0){
+    if(topTakeNumber <= 0){
+      // If data not sorted, sort it by around me ranking order-by.
+      sortRankingList(data, aroundMeOrderBy);
+    }
+    else if(topOrderBy != aroundMeOrderBy){
+      // If data already sorted, we need make a deep copy before sorting it again, otherwise the top ranking list position will be modified.
+      data = deepCopyRankingList(data);
+      sortRankingList(data, aroundMeOrderBy);
+    }
+    var range = findAroundMeRankingRange(data, id, aroundMeTakeNumber);
+    if(range != null){
+      aroundMeRankingList = data.slice(range.start, range.end + 1);
+    }
+  }
+  
+  return {top: topRankingList, aroundMe: aroundMeRankingList};
+}
+
+function sortRankingList(data, orderBy){
   if(orderBy == "ASC") {
     data.sort(scoreCompareASC);
   }else{
@@ -168,22 +202,6 @@ function getRankingLists(data, id, type, number, orderBy){
   for(var i = 0; i < data.length; i++){
     data[i].pos = i + 1;
   }
-  
-  var topRankingList = [];
-  var aroundMeRankingList = [];
-  
-  if(type == "Top" || type == "TopAndAroundMe"){
-    topRankingList = data.slice(0, number);
-  }
-  
-  if(type == "AroundMe" || type == "TopAndAroundMe"){
-    var range = findAroundMeRankingRange(data, id, number);
-    if(range != null){
-      aroundMeRankingList = data.slice(range.start, range.end + 1);
-    }
-  }
-  
-  return {top: topRankingList, aroundMe: aroundMeRankingList};
 }
 
 // Sort the scores in ascending order, if two scores are equal, the early created one will come first.
@@ -233,4 +251,12 @@ function findAroundMeRankingRange(data, myId, num) {
   right--;
   
   return {start: left, end: right};
+}
+
+function deepCopyRankingList(data){
+  var list = [];
+  for(var i in data){
+    list.push({id: data[i].id, playerName: data[i].playerName, score: data[i].score, pos: data[i].pos});
+  }
+  return list;
 }

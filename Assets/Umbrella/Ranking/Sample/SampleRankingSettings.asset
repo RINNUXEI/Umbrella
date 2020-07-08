@@ -15,6 +15,9 @@ MonoBehaviour:
   _appURL: 
   _defaultRankingRequestData:
     _rankingName: 
-    _rankingType: 0
-    _rankingNumber: 0
-    _orderBy: 0
+    _topRankingListSettings:
+      _takeNumber: 0
+      _orderBy: 0
+    _aroundMeRankingListSettings:
+      _takeNumber: 0
+      _orderBy: 0

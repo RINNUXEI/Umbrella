@@ -21,18 +21,25 @@ Because this asset almost does nothing about security things (hope Google will h
 1. Drag & Drop *Assets/Umbrella/Database/DatabaseManager* prefab into your scene hierarchy (the scene you want to do the data communication).
 2. In the Inspector of *Assets/Umbrella/Database/DatabaseSettings* scriptableobject, paste the web app URL you copied previously to the *App URL* field.
 3. Enter the sheet name of your default sheet into the *Default Sheet Name* field.
-4. You can now send any data to Google sheets using `DatabaseManager.Instance.SendDataAsync(data, sheetName)` and get data from Google sheets using `DatabaseManager.Instance.GetDataAsync(keys, responseHandler, sheetName)`. If you omit the *sheetName* parameter, the *Default Sheet Name* will be used. You can also add `yield return` before these methods to wait until the *responseHandler* callback returns.
-5. For specific usage, please refer to the sample scene and scripts.
+4. You can now send any data to Google sheets using `DatabaseManager.Instance.SendDataAsync(data, sheetName)` and get data from Google sheets using `DatabaseManager.Instance.GetDataAsync(keys, responseHandler, sheetName)`. If you omit the *sheetName* parameter, the *Default Sheet Name* will be used. 
+5. *responseHandler* is a callback function which will be called when response returns. Its parameter is a list of generic objects which contains the values of requested keys. You can use this callback to cast the values and implment your own display logic.
+6. If you want, add `yield return` before `DatabaseManager.Instance.SendDataAsync(data, sheetName)` or `DatabaseManager.Instance.GetDataAsync(keys, responseHandler, sheetName)` to hang on and wait until the *responseHandler* callback returns.
+7. For specific usage, please refer to the sample scene and scripts.
 ## Unity side (Ranking)
 1. Drag & Drop *Assets/Umbrella/Ranking/RankingManager* prefab into your scene hierarchy (the scene you want to do the data communication).
 2. In the Inspector of *Assets/Umbrella/Ranking/RankingSettings* scriptableobject, paste the web app URL you copied previously to the *App URL* field.
 3. Enter the default settings for your ranking requests. 
     - *Ranking Name* refers to the name of the ranking, which also determines the name of the corresponding Google Sheets sheet.
-    - *Ranking Type* lets you choose from top ranking, around me ranking, or both side. If you choose only top or around me ranking, the other side will be an empty array when returned.
-    - *Ranking Number* tells how many rows you want to get (e.g., a ranking number of 3 will get you only the first three places of the ranking list).
-    - *Order By* allows you to choose from ascending (ASC) or descending (DESC) order.
-4. Each time you want to send a score to Google Sheets, you need a `SendScoreRequestData` object. You can easily create a default one with the same settings as you set in the *RankingSettings* scriptableobject by calling `RankingManager.Instance.CreateDefaultSendScoreRequest(score)`. The same rule also applies to getting ranking lists, which requires a `RankingRequestData` object. You can now call `RankingManager.Instance.SendScoresAsync(requestDataList, responseHandler)` to send scores and call `RankingManager.Instance.GetRankingListsAsync(requestDataList, responseHandler)` to get ranking lists. If you want, add `yield return` before these methods to hang on and wait until the *responseHandler* callback returns.
-5. For specific usage, please refer to the sample scene and scripts.
+    - *Top Ranking List Settings* 
+        - *Take Number* tells how many data you want to take from the top ranking list, if zero no data will be returned (the ranking list won't be sorted at all).
+        - *Order By* tells whether sort the ranking list in ascending or descending order.
+    - *Around Me Ranking List Settings* 
+        - *Take Number* tells how many data you want to take from the around me ranking list, if zero no data will be returned (the ranking list won't be sorted at all).
+        - *Order By* tells whether sort the ranking list in ascending or descending order.
+4. Each time you want to send a score to Google Sheets, you need a `SendScoreRequestData` object. You can easily create a default one with the same settings as you set in the *RankingSettings* scriptableobject by calling `RankingManager.Instance.CreateDefaultSendScoreRequest(score)`. The same rule also applies to getting ranking lists, which requires a `RankingRequestData` object. You can now call `RankingManager.Instance.SendScoresAsync(requestDataList, responseHandler)` to send scores and call `RankingManager.Instance.GetRankingListsAsync(requestDataList, responseHandler)` to get ranking lists. 
+5. *responseHandler* is a callback function which will be called when response returns. Its parameter is a list of `RankingResponseData` objects which contains the sorted ranking lists. You can use this callback to implment your own ranking result display logic.
+6. If you want, add `yield return` before `RankingManager.Instance.SendScoresAsync(requestDataList, responseHandler)` or `RankingManager.Instance.GetRankingListsAsync(requestDataList, responseHandler)` to hang on and wait until the *responseHandler* callback returns.
+7. For specific usage, please refer to the sample scene and scripts.
 
 # Demo
 ## Database

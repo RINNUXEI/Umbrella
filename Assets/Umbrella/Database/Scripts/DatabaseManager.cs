@@ -39,7 +39,7 @@ namespace Umbrella.Database
         /// <param name="responseHandler">Method that will be called to handle response.</param>
         /// <param name="sheetName">Sheet name of the Google sheet to communicate with, if not provided the default sheet name will be used.</param>
         /// <returns></returns>
-        public CustomYieldInstruction GetDataAsync(IList<string> keys, Action<IList<string>> responseHandler, string sheetName = null)
+        public CustomYieldInstruction GetDataAsync(IList<string> keys, Action<IList<object>> responseHandler, string sheetName = null)
         {
             var sendData = new Dictionary<string, object>();
             sendData[Const.UserId] = LocalSaveDataHelper.GetUserID();
@@ -56,7 +56,7 @@ namespace Umbrella.Database
         /// <param name="responseHandler">Method that will be called to handle response.</param>
         /// <param name="sheetName">Sheet name of the Google sheet to communicate with, if not provided the default sheet name will be used.</param>
         /// <returns></returns>
-        public CustomYieldInstruction GetDataAsync(string cellReference, Action<IList<string>> responseHandler, string sheetName = null)
+        public CustomYieldInstruction GetDataAsync(string cellReference, Action<IList<object>> responseHandler, string sheetName = null)
         {
             var sendData = new Dictionary<string, object>();
             sendData[Const.SheetName] = sheetName ?? _settings.DefaultSheetName;
@@ -64,10 +64,10 @@ namespace Umbrella.Database
             return SendRequestAsync(Const.GetDataMethod, sendData, response => responseHandler?.Invoke(ParseResponse(response)));
         }
 
-        private IList<string> ParseResponse(object response)
+        private IList<object> ParseResponse(object response)
         {
-            var resultList = new List<string>();
-            foreach (var result in (IList)response) resultList.Add(result.ToString());
+            var resultList = new List<object>();
+            foreach (var result in (IList)response) resultList.Add(result);
             return resultList;
         }
     }

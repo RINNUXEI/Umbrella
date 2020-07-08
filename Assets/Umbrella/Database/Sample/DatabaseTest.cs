@@ -43,7 +43,7 @@ namespace Umbrella.Database
             //DatabaseManager.Instance.GetDataAsync("A1:E2", PrintResults);
         }
 
-        private void PrintResults(IList<string> results)
+        private void PrintResults(IList<object> results)
         {
             _getDataResults.text = string.Join(",", results);
         }

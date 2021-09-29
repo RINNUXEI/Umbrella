@@ -46,13 +46,13 @@ Because this asset almost does nothing about security things (hope Google will h
 * Send data to Google sheets. The gif shows sending data using key value pairs.
 ![Send data to Google sheets](Demos/send_data.gif)
 
-* Update data in Google sheets. The gif shows updating data by sending the key and a new value.
+* Update data in Google sheets. The gif below shows updating data by sending the key and a new value.
 ![Update data in Google sheets](Demos/update_data.gif)
 
 * Send another data. Note: Because Umbrella generates unique ids in Unity and saves them in PlayerPrefs, you should clear PlayerPrefs otherwise duplicated sending will overwrite the data already stored in Google sheets.
 ![Send another data](Demos/send_another_data.gif)
 
-* Get data from Google sheets by keys. The gifs shows getting data using a list of keys.
+* Get data from Google sheets by keys. The gif below shows getting data using a list of keys.
 ![Get data from Google sheets by keys](Demos/get_data.gif)
 
 * You can also get data by cell references.
